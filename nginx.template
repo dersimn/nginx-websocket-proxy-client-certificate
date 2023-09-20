@@ -83,25 +83,27 @@ http {
         ''      close;
     }
 
-    geo $whitelist_ip {
-        default         no;
-        
-        {{#WHITELIST_LOCAL_IP}}
-            10.0.0.0/8      yes;
-            172.16.0.0/12   yes;
-            192.168.0.0/16  yes;
-        {{/WHITELIST_LOCAL_IP}}
+    {{#WHITELIST}}
+        geo $whitelist_ip {
+            default         no;
+            
+            {{#WHITELIST_LOCAL_IP}}
+                10.0.0.0/8      yes;
+                172.16.0.0/12   yes;
+                192.168.0.0/16  yes;
+            {{/WHITELIST_LOCAL_IP}}
 
-        {{#WHITELIST_IP_ARRAY}}
-            {{.}}           yes;
-        {{/WHITELIST_IP_ARRAY}}
-    }
+            {{#WHITELIST_IP_ARRAY}}
+                {{.}}           yes;
+            {{/WHITELIST_IP_ARRAY}}
+        }
 
-    map $whitelist_ip$ssl_client_verify $access_allowed {
-        "~*^yes"        yes;
-        "noSUCCESS"     yes;
-        default         no;
-    }
+        map $whitelist_ip$ssl_client_verify $access_allowed {
+            "~*^yes"        yes;
+            "noSUCCESS"     yes;
+            default         no;
+        }
+    {{/WHITELIST}}
 
     server {
         server_name     _;
@@ -113,16 +115,26 @@ http {
             listen          [::]:443 ssl;
 
             # Redirect
-            if ($whitelist_ip = no) {
-                set $test A;
-            }
+            {{#WHITELIST}}
+                if ($whitelist_ip = no) {
+                    set $test A;
+                }
+            {{/WHITELIST}}
             if ($scheme = http) {
-                set $test  "${test}B"; 
+                {{#WHITELIST}}
+                    set $test  "${test}B";
+                {{/WHITELIST}}
+                {{^WHITELIST}}
+                    return 301 https://$host{{HTTPS_REDIRECT_PORT}}$request_uri;
+                    break;
+                {{/WHITELIST}}
             }
-            if ($test = AB) { 
-                return 301 https://$host{{HTTPS_REDIRECT_PORT}}$request_uri;
-                break; 
-            }
+            {{#WHITELIST}}
+                if ($test = AB) { 
+                    return 301 https://$host{{HTTPS_REDIRECT_PORT}}$request_uri;
+                    break; 
+                }
+            {{/WHITELIST}}
 
             # SSL certificates
             ssl_certificate         /ssl/nginx.crt;
@@ -134,7 +146,12 @@ http {
                 {{#SSL_CLIENT_AUTH_CRL}}
                     ssl_crl             /ssl/client.crl;
                 {{/SSL_CLIENT_AUTH_CRL}}
-                ssl_verify_client       optional;
+                {{#WHITELIST}}
+                    ssl_verify_client       optional;
+                {{/WHITELIST}}
+                {{^WHITELIST}}
+                    ssl_verify_client       on;
+                {{/WHITELIST}}
             {{/SSL_CLIENT_AUTH}}
         {{/ENABLE_HTTPS}}
 
@@ -142,11 +159,11 @@ http {
             root   /www;
             index  index.html index.htm;
 
-            {{#SSL_CLIENT_AUTH}}
+            {{#SSL_CLIENT_AUTH}}{{#WHITELIST}}
                 if ($access_allowed = no) {
                     return 403;
                 }
-            {{/SSL_CLIENT_AUTH}}
+            {{/WHITELIST}}{{/SSL_CLIENT_AUTH}}
         }
 
         {{#WS_PROXY}}
@@ -156,11 +173,11 @@ http {
                 proxy_set_header    Upgrade        $http_upgrade;
                 proxy_set_header    Connection     $connection_upgrade;
 
-                {{#SSL_CLIENT_AUTH}}
+                {{#SSL_CLIENT_AUTH}}{{#WHITELIST}}
                     if ($access_allowed = no) {
                         return 403;
                     }
-                {{/SSL_CLIENT_AUTH}}
+                {{/WHITELIST}}{{/SSL_CLIENT_AUTH}}
             }
         {{/WS_PROXY}}
     }

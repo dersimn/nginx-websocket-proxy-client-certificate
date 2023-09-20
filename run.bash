@@ -24,6 +24,9 @@ fi
 if [[ -z "${WS_PROXY_PATH}" ]]; then
     export WS_PROXY_PATH="/ws"
 fi
+if [[ "${WHITELIST_LOCAL_IP}" == "true" ]] || [[ ! -z "${WHITELIST_IP}" ]]; then
+	export WHITELIST=true
+fi
 
 IFS=', ' read -r -a WHITELIST_IP_ARRAY <<< "$WHITELIST_IP"
 export WHITELIST_IP_ARRAY
