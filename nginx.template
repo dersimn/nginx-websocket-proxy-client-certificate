@@ -1,4 +1,4 @@
-user www-data;
+user {{NGINX_UID}};
 worker_processes auto;
 
 pid /run/nginx.pid;

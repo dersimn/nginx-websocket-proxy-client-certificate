@@ -1,4 +1,4 @@
-FROM nginx
+FROM nginx:1
 
 ADD https://git.io/get-mo /usr/local/bin/mo
 RUN chmod a+x /usr/local/bin/mo
@@ -11,5 +11,6 @@ EXPOSE 80
 EXPOSE 443
 
 ENV WHITELIST_LOCAL_IP true
+ENV NGINX_UID www-data
 
 ENTRYPOINT ["bash", "/run.bash"]
