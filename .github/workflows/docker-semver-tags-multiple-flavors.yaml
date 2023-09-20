@@ -187,9 +187,9 @@ jobs:
             type=ref,event=branch,prefix=dev-,suffix=-${{ matrix.flavor }}
             
             # Commit short SHA WITHOUT suffix for default flavor
-            type=sha,enable=${{ matrix.default-flavor || 'false' }}
+            #type=sha,enable=${{ matrix.default-flavor || 'false' }}
             # Commit short SHA WITH suffix every flavor: sha-ad132f5-myflavor
-            type=sha,suffix=-${{ matrix.flavor }}
+            #type=sha,suffix=-${{ matrix.flavor }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
