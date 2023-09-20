@@ -1,6 +1,4 @@
 Docker Image with nginx and configurable websocket proxy with SSL client certifcate authorization.  
-This image includes a workaround for iOS Safari, as there is still an open bug that causes the SSL client certificate not being used for websocket connections, see [[1][1]] [[2][2]] [[3][3]].
-
 I started to build this image to proxy Mosquitto MQTT websockets, but it will work with every websocket connection. 
 
 # Usage
@@ -10,7 +8,7 @@ I started to build this image to proxy Mosquitto MQTT websockets, but it will wo
 Use this Image as baseimage for your own projects that need SSL Client Certificates on iOS devices:
 
 ```Dockerfile
-FROM dersimn/nginx-websocket-proxy-client-certificate-ios-workaround:3
+FROM dersimn/nginx-websocket-proxy-client-certificate:3
 
 COPY www /www
 
@@ -29,7 +27,7 @@ This image can proxy-pass the Websocket connections, by setting the env variable
         -v $(pwd)/www:/www:ro \
         -e "WS_PROXY=10.1.1.50:9001" \
         -p 80:80 \
-        dersimn/nginx-websocket-proxy-client-certificate-ios-workaround
+        dersimn/nginx-websocket-proxy-client-certificate
 
 If you provide an SSL key/cert pair in `/ssl`, the Docker Image will also enable HTTPS:
 
@@ -50,11 +48,17 @@ A nice tutorial on how to generate your own certificates, is located [here](http
         -e "WS_PROXY=10.1.1.50:9001" \
         -p 80:80 \
         -p 443:443 \
-        dersimn/nginx-websocket-proxy-client-certificate-ios-workaround
+        dersimn/nginx-websocket-proxy-client-certificate
 
 If you want to change the default ports, specify it like this: `-p 8001:80 -p 8443:443 -e "HTTPS_REDIRECT_PORT=8443"`.
 
-HTTPS and client-auth are optional for clients connecting from a local IP, according to [these](https://github.com/dersimn/nginx-websocket-proxy-client-certificate-ios-workaround/blob/3d8123b9830f49b9c1b3ef9176ef6c8fe22353dd/nginx.template#L90) IP ranges. If you don't want this behaviour, set `-e WHITELIST_LOCAL_IP=false` to force SSL and client-auth for everyone. You can also add own IP ranges to the whitelist with `-e WHITELIST_IP="10.1.1.0/24 192.168.1.0/24"`.
+HTTPS and client-auth are optional for clients connecting from a local IP, according to these IP ranges:
+
+- 10.0.0.0/8
+- 172.16.0.0/12
+- 192.168.0.0/16
+
+If you don't want this behaviour, set `-e WHITELIST_LOCAL_IP=false` to force SSL and client-auth for everyone. You can also add own IP ranges to the whitelist with `-e WHITELIST_IP="10.1.1.0/24 192.168.1.0/24"`.
 
 
 # Build
@@ -69,13 +73,8 @@ HTTPS and client-auth are optional for clients connecting from a local IP, accor
     docker buildx use mybuilder
     docker buildx build \
         --platform linux/386,linux/amd64,linux/arm/v7 \
-        -t dersimn/nginx-websocket-proxy-client-certificate-ios-workaround \
-        -t dersimn/nginx-websocket-proxy-client-certificate-ios-workaround:1 \
-        -t dersimn/nginx-websocket-proxy-client-certificate-ios-workaround:1.x \
-        -t dersimn/nginx-websocket-proxy-client-certificate-ios-workaround:1.x.0 \
+        -t dersimn/nginx-websocket-proxy-client-certificate \
+        -t dersimn/nginx-websocket-proxy-client-certificate:1 \
+        -t dersimn/nginx-websocket-proxy-client-certificate:1.x \
+        -t dersimn/nginx-websocket-proxy-client-certificate:1.x.0 \
         --push .
-
-
-[1]: http://blog.christophermullins.com/2017/04/30/securing-homeassistant-with-client-certificates
-[2]: https://github.com/home-assistant/home-assistant-iOS/issues/27
-[3]: https://www.bountysource.com/issues/35354552-websocket-does-not-send-client-certificate
