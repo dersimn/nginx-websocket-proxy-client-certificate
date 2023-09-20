@@ -24,9 +24,6 @@ fi
 if [[ -z "${WS_PROXY_PATH}" ]]; then
     export WS_PROXY_PATH="/ws"
 fi
-if [[ -z "${HMAC_SECRET}" ]]; then
-    export HMAC_SECRET="hunter2"
-fi
 
 IFS=', ' read -r -a WHITELIST_IP_ARRAY <<< "$WHITELIST_IP"
 export WHITELIST_IP_ARRAY
